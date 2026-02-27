@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tech Worker Extinction Clock</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { background: #111; min-height: 100vh; }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: #111; }
+    ::-webkit-scrollbar-thumb { background: #333; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState } = React;
+
+    const NEWS_ITEMS = [
+      {
+        company: "Amazon",
+        headline: "Amazon plans to slash 30,000 corporate jobs — its largest layoff in company history",
+        summary: "CEO Andy Jassy confirmed AI-driven productivity gains will require fewer people in certain roles, with overall headcount expected to shrink as automation kicks in. This follows 14,000 cuts in Oct 2025.",
+        date: "Jan 2026", workers: 30000,
+        url: "https://www.reuters.com/business/world-at-work/amazon-targets-many-30000-corporate-job-cuts-sources-say-2025-10-27/",
+        severity: "critical",
+      },
+      {
+        company: "Microsoft",
+        headline: "Microsoft cuts 19,215 jobs while 30% of all company code is now written by AI",
+        summary: "Multiple rounds of cuts across all teams. CEO Satya Nadella revealed AI now writes 30% of Microsoft's code. VPs told teams of 400 engineers to use AI for half their work — those same engineers were let go months later.",
+        date: "2025", workers: 19215,
+        url: "https://techblog.comsoc.org/2025/10/25/184k-global-tech-layoffs-in-2025-to-date-27-3-related-to-ai-replacing-workers/",
+        severity: "critical",
+      },
+      {
+        company: "Intel",
+        headline: "Intel eliminates 33,900 jobs — 15% of its entire global workforce",
+        summary: "The company cited failure to benefit from AI trends and spiralling costs. Thousands of engineers in Oregon, Arizona and globally received 60-day notices as Intel restructures entirely around AI infrastructure.",
+        date: "2025", workers: 33900,
+        url: "https://www.computerworld.com/article/3816579/tech-layoffs-this-year-a-timeline.html",
+        severity: "critical",
+      },
+      {
+        company: "IBM",
+        headline: "IBM confirms AI agents replaced hundreds of HR roles, announces 2,000–3,000 further cuts",
+        summary: "IBM's CEO said AI agents had already taken over back-office operations. The company is shifting remaining talent toward AI and quantum computing, eliminating entire departments.",
+        date: "Nov 2025", workers: 3000,
+        url: "https://programs.com/resources/ai-layoffs/",
+        severity: "high",
+      },
+      {
+        company: "UPS",
+        headline: "UPS cuts 48,000 jobs — 'automation allows us to move more volume with fewer workers'",
+        summary: "Under its 'Network of the Future' initiative, UPS closed 93 facilities and gutted its operational workforce. CEO Carol Tomé pointed directly at machine learning as enabling the largest cuts in the company's 116-year history.",
+        date: "Nov 2025", workers: 48000,
+        url: "https://programs.com/resources/ai-layoffs/",
+        severity: "critical",
+      },
+      {
+        company: "Klarna",
+        headline: "Klarna replaced 700 employees with AI — then had to rehire after quality collapsed",
+        summary: "The fintech deployed an AI assistant handling the workload of 700 staff. Customer satisfaction fell, complaints surged, and Klarna quietly began rehiring humans. A cautionary tale of premature automation.",
+        date: "2024–2025", workers: 700,
+        url: "https://hrexecutive.com/the-ai-layoff-trap-why-half-will-be-quietly-rehired/",
+        severity: "medium",
+      },
+      {
+        company: "Duolingo",
+        headline: "Duolingo declares itself 'AI-first', terminates 10% of contractors as AI replaces translators",
+        summary: "CEO Luis von Ahn's internal memo outlined AI handling content creation, performance reviews, and hiring. The company acknowledged AI now covers translation tasks across 100+ language offerings.",
+        date: "2025", workers: 1000,
+        url: "https://gulfnews.com/technology/ai-job-cuts-the-8-major-companies-replacing-humans-with-bots-1.500450587",
+        severity: "high",
+      },
+      {
+        company: "Salesforce",
+        headline: "Salesforce CEO: 'I reduced support headcount from 9,000 to 5,000 because I need fewer heads'",
+        summary: "Marc Benioff was unusually blunt: AI has displaced 4,000 support workers. Over 1,000 further cuts across marketing, product management, and data analytics roles followed in early 2026.",
+        date: "2024–2026", workers: 5000,
+        url: "https://gulfnews.com/technology/ai-job-cuts-the-8-major-companies-replacing-humans-with-bots-1.500450587",
+        severity: "high",
+      },
+      {
+        company: "Google",
+        headline: "Google cuts programmers as AI takes over software development",
+        summary: "About 6,000 employees — majority programmers — were laid off in May 2025 following Google's heavy deployment of AI across engineering and ad sales. CEO Sundar Pichai tied cuts to 'operational efficiency' via AI.",
+        date: "May 2025", workers: 6000,
+        url: "https://tech.co/news/companies-replace-workers-with-ai",
+        severity: "high",
+      },
+      {
+        company: "Paycom",
+        headline: "Paycom lays off 500+ employees — 'your roles have been replaced by AI-driven systems'",
+        summary: "Staff received explicit notification that their positions were eliminated due to AI automation of payroll and back-office functions. One of the most direct acknowledgements of AI displacement by any company.",
+        date: "Oct 2025", workers: 500,
+        url: "https://programs.com/resources/ai-layoffs/",
+        severity: "high",
+      },
+      {
+        company: "Chegg",
+        headline: "Online education firm Chegg axes 45% of workforce as AI kills its search traffic",
+        summary: "AI tools like ChatGPT have decimated Chegg's homework-help business. The company cited 'new realities of AI' as it eliminated 388 positions, following a 22% cut earlier in the year.",
+        date: "2025", workers: 388,
+        url: "https://tech.co/news/companies-replace-workers-with-ai",
+        severity: "medium",
+      },
+      {
+        company: "Industry-wide",
+        headline: "184,000 tech jobs cut in 2025 — 27% directly attributed to AI replacing workers",
+        summary: "As of October 2025, 50,184 jobs were cut specifically due to AI and automation. Big Tech new graduate hiring fell 25% year-over-year. Anthropic CEO Dario Amodei predicts AI could eliminate half of all entry-level white-collar jobs within five years.",
+        date: "2025", workers: 184000,
+        url: "https://techblog.comsoc.org/2025/10/25/184k-global-tech-layoffs-in-2025-to-date-27-3-related-to-ai-replacing-workers/",
+        severity: "critical",
+      },
+    ];
+
+    const MINUTE_ANGLE = 357.5;
+    const HOUR_ANGLE = MINUTE_ANGLE / 2;
+
+    const SEV = {
+      critical: { color: "#ff4040", label: "CRITICAL" },
+      high:     { color: "#ff8020", label: "HIGH" },
+      medium:   { color: "#ffcc00", label: "MODERATE" },
+    };
+
+    const STATS = [
+      { label: "Jobs cut in 2025",          value: "184,000+", color: "#ff4040", sub: "tech sector globally" },
+      { label: "AI-attributed cuts",         value: "27.3%",    color: "#ff8020", sub: "of all 2025 tech layoffs" },
+      { label: "Daily jobs lost to AI",      value: "491",      color: "#ff8020", sub: "every single day" },
+      { label: "Grad hiring decline",        value: "−25%",     color: "#ffcc00", sub: "Big Tech, YoY 2024" },
+      { label: "White-collar jobs at risk",  value: "50%",      color: "#ffcc00", sub: "entry-level, per Anthropic CEO" },
+      { label: "IT jobs to be transformed",  value: "92%",      color: "#ff4040", sub: "by AI automation" },
+    ];
+
+    function fmt(n) {
+      if (n >= 1000) return (n / 1000).toFixed(n >= 10000 ? 0 : 1) + "k";
+      return String(n);
+    }
+
+    function Hand({ angle, length, width, color, useGlow }) {
+      const rad = ((angle - 90) * Math.PI) / 180;
+      return (
+        <line
+          x1={200} y1={200}
+          x2={200 + length * Math.cos(rad)}
+          y2={200 + length * Math.sin(rad)}
+          stroke={color} strokeWidth={width} strokeLinecap="round"
+          filter={useGlow ? "url(#glow)" : undefined}
+        />
+      );
+    }
+
+    function App() {
+      const [hovered, setHovered] = useState(null);
+      const [visibleCount, setVisibleCount] = useState(5);
+      const totalJobs = NEWS_ITEMS.reduce((a, b) => a + b.workers, 0);
+
+      return (
+        <div style={{
+          minHeight: "100vh", background: "#111", color: "#e8e0d0",
+          fontFamily: "'Courier New', monospace",
+          display: "flex", flexDirection: "column", alignItems: "center",
+        }}>
+
+          {/* HEADER */}
+          <div style={{ width: "100%", maxWidth: 900, padding: "32px 24px 0", textAlign: "center" }}>
+            <div style={{ fontSize: 11, letterSpacing: "0.4em", color: "#ff4040", marginBottom: 10, animation: "blink 2s infinite", fontWeight: 700 }}>
+              ◆ THREAT LEVEL: EXISTENTIAL ◆
+            </div>
+            <h1 style={{ fontSize: "clamp(22px, 4.5vw, 46px)", fontWeight: 900, margin: "0 0 10px", color: "#ffffff", textShadow: "0 0 40px rgba(255,64,64,0.5)" }}>
+              TECH WORKER EXTINCTION CLOCK
+            </h1>
+            <p style={{ fontSize: 13, fontWeight: 700, letterSpacing: "0.22em", color: "#d8d0c0", margin: "0 0 14px" }}>
+              TIME REMAINING BEFORE FULL AI REPLACEMENT
+            </p>
+            <div style={{ display: "inline-block", background: "#ff4040", color: "#fff", fontSize: 12, fontWeight: 700, letterSpacing: "0.3em", padding: "6px 20px", marginBottom: 40 }}>
+              {fmt(totalJobs).toUpperCase()} JOBS ELIMINATED · COUNTING
+            </div>
+          </div>
+
+          {/* CLOCK + STATS */}
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 32, justifyContent: "center", alignItems: "flex-start", width: "100%", maxWidth: 900, padding: "0 24px", marginBottom: 48 }}>
+
+            {/* Clock SVG */}
+            <div style={{ position: "relative", flexShrink: 0 }}>
+              <svg width={400} height={400} viewBox="0 0 400 400" style={{ display: "block" }}>
+                <defs>
+                  <filter id="glow">
+                    <feGaussianBlur stdDeviation="5" result="b" />
+                    <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
+                  </filter>
+                  <filter id="rglow">
+                    <feGaussianBlur stdDeviation="9" result="b" />
+                    <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
+                  </filter>
+                  <radialGradient id="face" cx="50%" cy="50%" r="50%">
+                    <stop offset="0%" stopColor="#250a0a" />
+                    <stop offset="100%" stopColor="#0e0000" />
+                  </radialGradient>
+                </defs>
+
+                <circle cx={200} cy={200} r={196} fill="none" stroke="#3a3a3a" strokeWidth={3} />
+                <circle cx={200} cy={200} r={185} fill="url(#face)" />
+
+                {/* Danger wedge */}
+                {(() => {
+                  const r = 155, toR = d => ((d - 90) * Math.PI) / 180;
+                  const x1 = 200 + r * Math.cos(toR(330)), y1 = 200 + r * Math.sin(toR(330));
+                  const x2 = 200 + r * Math.cos(toR(360)), y2 = 200 + r * Math.sin(toR(360));
+                  return <path d={`M200 200 L${x1} ${y1} A${r} ${r} 0 0 1 ${x2} ${y2}Z`} fill="rgba(255,60,60,0.22)" />;
+                })()}
+
+                {/* Ticks */}
+                {Array.from({ length: 60 }, (_, i) => {
+                  const isH = i % 5 === 0;
+                  const a = (i * 6 - 90) * (Math.PI / 180);
+                  return <line key={i}
+                    x1={200 + (isH ? 162 : 172) * Math.cos(a)} y1={200 + (isH ? 162 : 172) * Math.sin(a)}
+                    x2={200 + 181 * Math.cos(a)} y2={200 + 181 * Math.sin(a)}
+                    stroke={isH ? "#888" : "#444"} strokeWidth={isH ? 2.5 : 1} />;
+                })}
+
+                {/* Numbers */}
+                {[12,1,2,3,4,5,6,7,8,9,10,11].map((h, i) => {
+                  const a = (i * 30 - 90) * (Math.PI / 180);
+                  const isXII = h === 12;
+                  return <text key={h}
+                    x={200 + 147 * Math.cos(a)} y={200 + 147 * Math.sin(a)}
+                    textAnchor="middle" dominantBaseline="middle"
+                    fill={isXII ? "#ff4040" : "#cccccc"}
+                    fontSize={isXII ? 18 : 14} fontWeight={isXII ? 900 : 600}
+                    fontFamily="'Courier New', monospace"
+                    filter={isXII ? "url(#glow)" : undefined}>
+                    {isXII ? "XII" : h}
+                  </text>;
+                })}
+
+                <text x={200} y={46} textAnchor="middle" fill="#ff6060" fontSize={9} letterSpacing="0.2em" fontFamily="'Courier New', monospace" fontWeight={700}>
+                  MIDNIGHT = AI SINGULARITY
+                </text>
+
+                <Hand angle={HOUR_ANGLE}   length={78}  width={9} color="#aa0808" useGlow={true} />
+                <Hand angle={MINUTE_ANGLE} length={120} width={5} color="#ff4040" useGlow={true} />
+
+                <circle cx={200} cy={200} r={9} fill="#ff4040" filter="url(#rglow)" />
+                <circle cx={200} cy={200} r={4} fill="#ff8080" />
+
+                <text x={200} y={294} textAnchor="middle" fill="#ff5050" fontSize={16} fontWeight={900} fontFamily="'Courier New', monospace" filter="url(#glow)">
+                  2 MIN 30 SEC TO MIDNIGHT
+                </text>
+                <text x={200} y={315} textAnchor="middle" fill="#d0c8b8" fontSize={10} letterSpacing="0.2em" fontFamily="'Courier New', monospace" fontWeight={600}>
+                  CLOSEST IN RECORDED HISTORY
+                </text>
+              </svg>
+              <div style={{ position: "absolute", inset: 0, borderRadius: "50%", boxShadow: "0 0 60px rgba(255,64,64,0.12) inset", pointerEvents: "none" }} />
+            </div>
+
+            {/* Stats */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 10, flex: 1, minWidth: 220, maxWidth: 340 }}>
+              {STATS.map(s => (
+                <div key={s.label} style={{ background: "#1c1c1c", border: "1px solid #333", padding: "13px 16px", position: "relative" }}>
+                  <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 3, background: s.color }} />
+                  <div style={{ fontSize: 10, color: "#d0c8b8", letterSpacing: "0.18em", marginBottom: 3, fontWeight: 700 }}>{s.label.toUpperCase()}</div>
+                  <div style={{ fontSize: 26, fontWeight: 900, color: s.color, lineHeight: 1, textShadow: `0 0 18px ${s.color}44` }}>{s.value}</div>
+                  <div style={{ fontSize: 12, color: "#c8c0b0", marginTop: 4, fontWeight: 600 }}>{s.sub}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* NEWS FEED */}
+          <div style={{ width: "100%", maxWidth: 900, padding: "0 24px 48px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 20, borderBottom: "1px solid #333", paddingBottom: 14 }}>
+              <div style={{ width: 8, height: 8, background: "#ff4040", borderRadius: "50%", animation: "blink 1.2s infinite", flexShrink: 0 }} />
+              <span style={{ fontSize: 11, letterSpacing: "0.3em", color: "#d8d0c0", fontWeight: 700 }}>LIVE AI DISPLACEMENT FEED</span>
+              <span style={{ marginLeft: "auto", fontSize: 11, color: "#c0b8a8", fontWeight: 600 }}>{NEWS_ITEMS.length} INCIDENTS LOGGED</span>
+            </div>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+              {NEWS_ITEMS.slice(0, visibleCount).map((item, i) => {
+                const sev = SEV[item.severity];
+                const isHov = hovered === i;
+                return (
+                  <a key={i} href={item.url} target="_blank" rel="noopener noreferrer"
+                    style={{
+                      display: "block",
+                      background: isHov ? "#222" : "#1a1a1a",
+                      border: `1px solid ${isHov ? sev.color + "70" : "#2e2e2e"}`,
+                      padding: "16px 18px", textDecoration: "none", color: "inherit",
+                      transition: "all 0.12s", position: "relative",
+                    }}
+                    onMouseEnter={() => setHovered(i)}
+                    onMouseLeave={() => setHovered(null)}
+                  >
+                    <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 3, background: sev.color, opacity: isHov ? 1 : 0.7 }} />
+                    <div style={{ display: "flex", gap: 16, alignItems: "flex-start" }}>
+                      <div style={{ flexShrink: 0, width: 76, textAlign: "center" }}>
+                        <div style={{ fontSize: 9, letterSpacing: "0.18em", color: sev.color, marginBottom: 3, fontWeight: 700 }}>{sev.label}</div>
+                        <div style={{ fontSize: 21, fontWeight: 900, color: sev.color, lineHeight: 1, textShadow: `0 0 10px ${sev.color}50` }}>{fmt(item.workers)}</div>
+                        <div style={{ fontSize: 11, color: "#d0c8b8", marginTop: 4, fontWeight: 700 }}>JOBS</div>
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 7, flexWrap: "wrap" }}>
+                          <span style={{ background: "#2a2a2a", border: "1px solid #444", fontSize: 10, padding: "3px 9px", letterSpacing: "0.15em", color: "#ffffff", fontWeight: 700 }}>
+                            {item.company.toUpperCase()}
+                          </span>
+                          <span style={{ fontSize: 11, color: "#d0c8b8", fontWeight: 600 }}>{item.date}</span>
+                          <span style={{ marginLeft: "auto", fontSize: 10, color: "#c8c0b0", letterSpacing: "0.1em", fontWeight: 600 }}>VIEW SOURCE →</span>
+                        </div>
+                        <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 7, lineHeight: 1.45, color: isHov ? "#ffffff" : "#e8e0d0" }}>
+                          {item.headline}
+                        </div>
+                        <div style={{ fontSize: 12, color: "#c8c0b0", lineHeight: 1.7, fontWeight: 500 }}>
+                          {item.summary}
+                        </div>
+                      </div>
+                    </div>
+                  </a>
+                );
+              })}
+            </div>
+
+            {visibleCount < NEWS_ITEMS.length && (
+              <button
+                onClick={() => setVisibleCount(v => Math.min(v + 5, NEWS_ITEMS.length))}
+                onMouseEnter={e => { e.currentTarget.style.borderColor = "#ff4040"; e.currentTarget.style.color = "#ff4040"; }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = "#333"; e.currentTarget.style.color = "#d0c8b8"; }}
+                style={{ marginTop: 2, width: "100%", background: "#1a1a1a", border: "1px solid #333", color: "#d0c8b8", padding: "14px", cursor: "pointer", fontSize: 11, letterSpacing: "0.3em", fontFamily: "'Courier New', monospace", transition: "all 0.12s", fontWeight: 700 }}
+              >
+                LOAD MORE INCIDENTS ({NEWS_ITEMS.length - visibleCount} REMAINING)
+              </button>
+            )}
+
+            <div style={{ marginTop: 40, textAlign: "center", fontSize: 10, color: "#888", letterSpacing: "0.14em", lineHeight: 2, fontWeight: 600 }}>
+              <div>DATA SOURCED FROM: TECH.CO · COMPUTERWORLD · IEEE COMSOC · PROGRAMS.COM · HBR · GULF NEWS</div>
+              <div>CLOCK METHODOLOGY BASED ON BULLETIN OF ATOMIC SCIENTISTS DOOMSDAY CLOCK FRAMEWORK</div>
+              <div style={{ marginTop: 6, color: "#666" }}>© {new Date().getFullYear()} TECH EXTINCTION CLOCK · NOT AFFILIATED WITH ANY COMPANY</div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById("root"));
+    root.render(<App />);
+  </script>
+</body>
+</html>
